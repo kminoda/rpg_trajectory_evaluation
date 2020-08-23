@@ -184,7 +184,14 @@ def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_nam
         print("Collected trajectories to plot: {0}".format(algorithm_names))
         assert sorted(algorithm_names) == sorted(list(p_es_0.keys()))
 
+        is_equal_set = lambda l, lq: len(lq) == len(set(l) & set(lq))
+        if is_equal_set(algorithm_names, ['base', 'low', 'mid', 'high']):
+            algorithm_names = ['base', 'low', 'mid', 'high']
+        if is_equal_set(algorithm_names, ['VINS-Mono', 'ROVIO', 'VINS-Mask']):
+            algorithm_names = ['VINS-Mono', 'ROVIO', 'VINS-Mask']
+
         print("Plotting {0}...".format(dataset_nm))
+        linestyles = [(0, (1, 1)), (0, (5, 1)), (0, (5, 1, 1, 1)), (0, (5, 3, 1, 3 ,1, 3))]
 
         # plot trajectory
         fig = plt.figure(figsize=(6, 5.5))
@@ -193,7 +200,7 @@ def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_nam
                              xlabel='x [m]', ylabel='y [m]')
         if dataset_nm in plot_settings['datasets_titles']:
             ax.set_title(plot_settings['datasets_titles'][dataset_nm])
-        for alg in algorithm_names:
+        for i, alg in enumerate(algorithm_names):
             if plot_traj_per_alg:
                 fig_i = plt.figure(figsize=(6, 5.5))
                 ax_i = fig_i.add_subplot(111, aspect='equal',
@@ -204,17 +211,20 @@ def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_nam
                 if plot_aligned:
                     pu.plot_aligned_top(ax_i, p_es_0[alg], p_gt_0[alg], -1)
                 # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+                plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.)
                 fig_i.tight_layout()
                 fig_i.savefig(output_dir+'/' + dataset_nm + '_trajectory_top_' +
                               plot_settings['algo_labels'][alg] + FORMAT,
                               bbox_inches="tight", dpi=args.dpi)
                 plt.close(fig_i)
-            pu.plot_trajectory_top(ax, p_es_0[alg],
+            pu.my_plot_trajectory_top(ax, p_es_0[alg],
                                    plot_settings['algo_colors'][alg],
-                                   plot_settings['algo_labels'][alg])
+                                   plot_settings['algo_labels'][alg], 
+                                   linestyle=linestyles[i])
         plt.sca(ax)
-        pu.plot_trajectory_top(ax, p_gt_raw, 'm', 'Groundtruth')
+        pu.my_plot_trajectory_top(ax, p_gt_raw, 'm', 'Groundtruth')
         # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.)
         fig.tight_layout()
         fig.savefig(output_dir+'/' + dataset_nm +
                     '_trajectory_top'+FORMAT, bbox_inches="tight", dpi=args.dpi)
