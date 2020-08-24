@@ -169,6 +169,16 @@ def plot_rmse_per_dataset(algorithm_rmse, dataset_names, algorithm_names,
     plt.close(fig)
 
 
+def export_legend(ax, filename='legend.pdf'):
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot()
+    ax2.axis('off')
+    legend = ax2.legend(*ax.get_legend_handles_labels(), frameon=False, loc='lower center', ncol=10)
+    fig = legend.figure
+    fig.canvas.draw()
+    bbox = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    fig.savefig(filename, dpi='figure', bbox_inches=bbox)
+
 def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_names,
                       datasets_out_dir, plot_settings, plot_idx=0, plot_side=True,
                       plot_aligned=True, plot_traj_per_alg=True):
@@ -187,8 +197,8 @@ def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_nam
         is_equal_set = lambda l, lq: len(lq) == len(set(l) & set(lq))
         if is_equal_set(algorithm_names, ['base', 'low', 'mid', 'high']):
             algorithm_names = ['base', 'low', 'mid', 'high']
-        if is_equal_set(algorithm_names, ['VINS-Mono', 'ROVIO', 'VINS-Mask']):
-            algorithm_names = ['VINS-Mono', 'ROVIO', 'VINS-Mask']
+        if is_equal_set(algorithm_names, ['vins_mono', 'rovio', 'vins_mask']):
+            algorithm_names = ['vins_mono', 'rovio', 'vins_mask']
 
         print("Plotting {0}...".format(dataset_nm))
         linestyles = [(0, (1, 1)), (0, (5, 1)), (0, (5, 1, 1, 1)), (0, (5, 3, 1, 3 ,1, 3))]
@@ -197,9 +207,15 @@ def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_nam
         fig = plt.figure(figsize=(6, 5.5))
         ax = fig.add_subplot(111, 
                              # aspect='equal',
-                             xlabel='x [m]', ylabel='y [m]')
-        if dataset_nm in plot_settings['datasets_titles']:
-            ax.set_title(plot_settings['datasets_titles'][dataset_nm])
+                             # xlabel='x [m]', ylabel='y [m]'
+                             )
+        ax.set_xlabel('x [m]', fontsize=16)
+        ax.set_ylabel('y [m]', fontsize=16)
+        # if dataset_nm in plot_settings['datasets_titles']:
+        #     ax.set_title(plot_settings['datasets_titles'][dataset_nm])
+
+        lines = []
+        ax.set_title(dataset_nm.replace('_', '\_'), fontsize=20)      
         for i, alg in enumerate(algorithm_names):
             if plot_traj_per_alg:
                 fig_i = plt.figure(figsize=(6, 5.5))
@@ -217,17 +233,29 @@ def my_plot_trajectories(dataset_trajectories_list, dataset_names, algorithm_nam
                               plot_settings['algo_labels'][alg] + FORMAT,
                               bbox_inches="tight", dpi=args.dpi)
                 plt.close(fig_i)
-            pu.my_plot_trajectory_top(ax, p_es_0[alg],
+            line = pu.my_plot_trajectory_top(ax, p_es_0[alg],
                                    plot_settings['algo_colors'][alg],
                                    plot_settings['algo_labels'][alg], 
                                    linestyle=linestyles[i])
+            lines.append(line)
         plt.sca(ax)
-        pu.my_plot_trajectory_top(ax, p_gt_raw, 'm', 'Groundtruth')
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
+        line = pu.my_plot_trajectory_top(ax, p_gt_raw, 'm', 'Groundtruth')
+        lines.append(line)
         # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.)
+        # plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.)
         fig.tight_layout()
         fig.savefig(output_dir+'/' + dataset_nm +
                     '_trajectory_top'+FORMAT, bbox_inches="tight", dpi=args.dpi)
+
+        ### export legend ###
+        # export_legend(ax, filename=output_dir+'/legend'+FORMAT)
+        figlegend = plt.figure()
+        print(len(lines), len(list(plot_settings['algo_labels'].values())))
+        figlegend.legend(lines, [plot_settings['algo_labels'][alg] for alg in algorithm_names] + ['Groundtruth'], 'center', ncol=10)
+        figlegend.savefig(output_dir+'/legend'+FORMAT, bbox_inches="tight", dpi=args.dpi)
+
         plt.close(fig)
 
         # plot trajectory side
